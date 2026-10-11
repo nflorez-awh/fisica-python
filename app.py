@@ -58,16 +58,42 @@ c1,c2,c3=st.columns(3)
 c1.metric("Tiempo de impacto",f"{tf:.3f} s")
 c2.metric("Posición horizontal al impacto",f"{s['x'][-1]:.3f} m")
 c3.metric("Posición inicial requerida xP0",f"{xP0:.3f} m")
-fig,axs=plt.subplots(2,3,figsize=(16,8))
-axs[0,0].plot(s["x"],s["y"],label="Paquete"); axs[0,0].axhline(H,ls="--",label="y=H"); axs[0,0].scatter([s["x"][-1]],[H]); axs[0,0].invert_yaxis(); axs[0,0].set(title="Trayectoria",xlabel="x (m)",ylabel="y (m; positivo abajo)")
-axs[0,1].plot(t,s["x"],label="Paquete"); axs[0,1].plot(t,xp,"--",label="Centro plataforma"); axs[0,1].set(title="Posición horizontal",xlabel="t (s)",ylabel="x (m)")
-axs[0,2].plot(t,s["y"]); axs[0,2].axhline(H,ls="--"); axs[0,2].set(title="Posición vertical",xlabel="t (s)",ylabel="y (m)")
-axs[1,0].plot(t,s["vx"],label="vx"); axs[1,0].plot(t,s["vy"],label="vy"); axs[1,0].set(title="Velocidades",xlabel="t (s)",ylabel="m/s")
-axs[1,1].plot(t,s["ax"],label="ax"); axs[1,1].plot(t,s["ay"],label="ay"); axs[1,1].set(title="Aceleraciones",xlabel="t (s)",ylabel="m/s²")
-axs[1,2].axis("off")
-for ax in axs.flat[:5]:
-    ax.axvline(ta,ls=":",color="gray",label="Apertura"); ax.axvline(tf,ls="-.",color="black",label="Impacto"); ax.grid(alpha=.3); ax.legend(fontsize=8)
-axs[1,2].text(0,1,f"RESULTADOS EN EL IMPACTO\\n\\nvx = {vx:.3f} m/s\\nvy = {vy:.3f} m/s\\nax = {s['ax'][-1]:.3f} m/s²\\nay = {s['ay'][-1]:.3f} m/s²\\n\\nVelocidad relativa horizontal = {relx:.3f} m/s\\n\\nSeguridad vertical (vy ≤ 6): {'CUMPLE' if okv else 'NO CUMPLE'}\\nSeguridad horizontal (|vx-vP| ≤ 4): {'CUMPLE' if okx else 'NO CUMPLE'}\\nSeguridad total: {'CUMPLE' if okv and okx else 'NO CUMPLE'}",va="top",family="monospace",fontsize=10)
-fig.suptitle("Simulador cinemático del parcial",fontsize=15); fig.tight_layout()
-st.pyplot(fig)
+# Gráficos grandes: dos por fila para que sean legibles incluso en pantallas pequeñas.
+plt.rcParams.update({"font.size": 12, "axes.titlesize": 15, "axes.labelsize": 12,
+                     "legend.fontsize": 11, "xtick.labelsize": 10, "ytick.labelsize": 10})
+fig, axs = plt.subplots(3, 2, figsize=(18, 17), constrained_layout=True)
+axs = axs.ravel()
+axs[0].plot(s["x"], s["y"], linewidth=2.5, label="Paquete")
+axs[0].axhline(H, ls="--", linewidth=2, label="y = H")
+axs[0].scatter([s["x"][-1]], [H], s=75, zorder=4, label="Impacto")
+axs[0].invert_yaxis(); axs[0].set(title="Trayectoria del paquete", xlabel="x (m)", ylabel="y (m; positivo abajo)")
+axs[1].plot(t, s["x"], linewidth=2.5, label="Paquete")
+axs[1].plot(t, xp, "--", linewidth=2.5, label="Centro de la plataforma")
+axs[1].set(title="Posición horizontal", xlabel="Tiempo t (s)", ylabel="x (m)")
+axs[2].plot(t, s["y"], linewidth=2.5, label="y del paquete")
+axs[2].axhline(H, ls="--", linewidth=2, label="Altura de impacto H")
+axs[2].set(title="Posición vertical", xlabel="Tiempo t (s)", ylabel="y (m)")
+axs[3].plot(t, s["vx"], linewidth=2.5, label="vx")
+axs[3].plot(t, s["vy"], linewidth=2.5, label="vy")
+axs[3].set(title="Componentes de velocidad", xlabel="Tiempo t (s)", ylabel="Velocidad (m/s)")
+axs[4].plot(t, s["ax"], linewidth=2.5, label="ax")
+axs[4].plot(t, s["ay"], linewidth=2.5, label="ay")
+axs[4].set(title="Componentes de aceleración", xlabel="Tiempo t (s)", ylabel="Aceleración (m/s²)")
+axs[5].axis("off")
+result_text = (f"RESULTADOS EN EL IMPACTO\n\n"
+               f"vx = {vx:.3f} m/s\nvy = {vy:.3f} m/s\n"
+               f"ax = {s['ax'][-1]:.3f} m/s²\nay = {s['ay'][-1]:.3f} m/s²\n\n"
+               f"Velocidad relativa horizontal = {relx:.3f} m/s\n\n"
+               f"Seguridad vertical (vy ≤ 6): {'CUMPLE' if okv else 'NO CUMPLE'}\n"
+               f"Seguridad horizontal (|vx-vP| ≤ 4): {'CUMPLE' if okx else 'NO CUMPLE'}\n"
+               f"Seguridad total: {'CUMPLE' if okv and okx else 'NO CUMPLE'}")
+axs[5].text(0.03, 0.97, result_text, va="top", family="monospace", fontsize=13,
+            bbox={"boxstyle": "round,pad=0.8", "alpha": 0.12})
+for ax in axs[:5]:
+    ax.axvline(ta, ls=":", linewidth=2, color="gray", label="Apertura del paracaídas")
+    ax.axvline(tf, ls="-.", linewidth=2, color="black", label="Impacto")
+    ax.grid(True, alpha=.3); ax.legend(loc="best")
+fig.suptitle("Simulador cinemático del parcial", fontsize=21, fontweight="bold")
+st.pyplot(fig, use_container_width=True)
+plt.close(fig)
 st.info("El programa ajusta xP0 para que el centro de la plataforma coincida con el paquete en el instante de impacto. Las constantes temporales se mantienen en los valores del enunciado.")
